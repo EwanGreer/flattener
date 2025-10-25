@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 
 	"gopkg.in/yaml.v3"
 )
@@ -27,7 +28,9 @@ func (f Flattener) JSON(input json.RawMessage) ([]byte, error) {
 	result := make(map[string]any)
 	f.Flatten("", data, result)
 
-	b, err := json.Marshal(result)
+	sorted := sortMap(result)
+
+	b, err := json.Marshal(sorted)
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal result: %w", err)
 	}
@@ -50,7 +53,9 @@ func (f Flattener) YAML(input []byte) ([]byte, error) {
 	result := make(map[string]any)
 	f.Flatten("", data, result)
 
-	b, err := yaml.Marshal(result)
+	sorted := sortMap(result)
+
+	b, err := yaml.Marshal(sorted)
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal result: %w", err)
 	}
@@ -82,4 +87,20 @@ func (f Flattener) Flatten(prefix string, data any, result map[string]any) {
 	default:
 		result[prefix] = t
 	}
+}
+
+// sortMap sorts a map by keys and returns a new map with sorted order
+func sortMap(m map[string]any) map[string]any {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	sorted := make(map[string]any, len(m))
+	for _, k := range keys {
+		sorted[k] = m[k]
+	}
+
+	return sorted
 }

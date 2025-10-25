@@ -225,6 +225,22 @@ func TestFlattener_flatten(t *testing.T) {
 	}
 }
 
+func TestFlattener_JSON_Sorting(t *testing.T) {
+	f := flattener.Flattener{
+		Delimeter: ".",
+	}
+
+	// Test with input that would have random order if not sorted
+	input := []byte(`{"z":{"b":"value1","a":"value2"},"a":{"z":"value3","a":"value4"}}`)
+
+	result, err := f.JSON(input)
+	assert.NoError(t, err)
+
+	// The keys should be in alphabetical order
+	expected := []byte(`{"a.a":"value4","a.z":"value3","z.a":"value2","z.b":"value1"}`)
+	assert.Equal(t, expected, result)
+}
+
 func TestFlattener_YAML(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -299,4 +315,18 @@ func TestFlattener_YAML(t *testing.T) {
 			assert.Equal(t, tt.want, string(result), "YAML output does not match")
 		})
 	}
+}
+
+func TestFlattener_YAML_Sorting(t *testing.T) {
+	f := flattener.Flattener{
+		Delimeter: ".",
+	}
+
+	input := []byte("z:\n  b: value1\n  a: value2\na:\n  z: value3\n  a: value4\n")
+
+	result, err := f.YAML(input)
+	assert.NoError(t, err)
+
+	expected := "a.a: value4\na.z: value3\nz.a: value2\nz.b: value1\n"
+	assert.Equal(t, expected, string(result))
 }
